@@ -2,18 +2,17 @@ import colorgram
 from settings import *
 import os
 import glob
-import PIL
+from PIL import Image, ImageDraw
 import datetime
 import pickle
 
-dict_filename = 'dict.pickle'
 
 if __name__ == "__main__":
-    # check if dictionary exists
-    dict = {}
+    # check if dictionary pickle exists
+    fdict = {}
     try:
         with open(dict_filename, 'rb') as handle:
-            dict = pickle.load(handle)
+            fdict = pickle.load(handle)
     except FileNotFoundError:
         pass
     cwd = os.getcwd()
@@ -21,22 +20,33 @@ if __name__ == "__main__":
 
     times = {}
     for file in file_list:
-        if file not in dict.keys():
+        if file not in fdict.keys():
             time_start = datetime.datetime.now()
             colors = colorgram.extract(file, num_colors)
             time_end = datetime.datetime.now()
             times[file] = (time_end - time_start).seconds
-            dict[file] = colors
+            fdict[file] = colors
             with open(dict_filename, 'wb') as handle:
-                pickle.dump(dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                pickle.dump(fdict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         else:
             # The file has already been processed, skip
             pass
-    print(dict)
 
+    im = Image.new('RGB', (img_w, len(fdict.keys()) * img_h_m), (0, 0, 0))
+    draw = ImageDraw.Draw(im)
+    i_vals = zip(range(len(fdict.keys())), fdict.values())
+    for i, value in i_vals:
+        print(i, value)
+        total_proportion = 0
+        for j, color in zip(range(num_colors), value):
+            draw.rectangle(
+                (
+                    int(total_proportion * img_w),
+                    i*img_h_m,
+                    int((total_proportion + color.proportion) * img_w),
+                    (i+1)*img_h_m
+                ),
+                fill=color.rgb)
+            total_proportion += color.proportion
 
-    # i = 0
-    # for color in colors:
-    #     i += color.proportion * 1024
-
-    # colors =
+    im.save(image_out, quality=100)
