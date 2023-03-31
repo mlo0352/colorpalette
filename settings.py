@@ -1,5 +1,5 @@
 # Directory to the image you want to process
-file_dir = ""
+file_dir = "images"
 
 # Number of colors to extract per image
 num_colors = 8
